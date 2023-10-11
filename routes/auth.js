@@ -8,6 +8,11 @@ const { JWT_SECRET } = require('../utils/jwt');
 const nodemailer = require("nodemailer");
 const otpGenerator = require('otp-generator');
 
+
+
+
+
+
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -62,7 +67,6 @@ router.post('/login', async (req, res) => {
 });
 
 
-
 // Forgot Password Route
 router.post('/forgot-password', async (req, res) => {
   try {
@@ -75,14 +79,13 @@ router.post('/forgot-password', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
-
- // Generate a one-time password (OTP)
- const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
-
- // Store the OTP in the user's document in the database
- user.resetPasswordOTP = otp;
- 
-
+    function generateNumericOTP(length) {
+      const min = Math.pow(10, length - 1);
+      const max = Math.pow(10, length) - 1;
+      return String(Math.floor(min + Math.random() * (max - min + 1)));
+    }
+    const numericOTP = generateNumericOTP(6);  
+    res.json({ message: 'Numeric OTP sent to your email or phone.', numericOTP });
  // Send the OTP to the user via email
 
  const transporter = nodemailer.createTransport({
@@ -102,7 +105,7 @@ router.post('/forgot-password', async (req, res) => {
    from: 'eclecticatmsl23@gmail.com',
    to: user.email,
    subject: 'Password Reset OTP',
-   text: `Your one-time password (OTP) for password reset is: ${otp}`,
+   text: `Your one-time password (OTP) for password reset is: ${numericOTP}`,
  };
  
 
@@ -119,5 +122,6 @@ router.post('/forgot-password', async (req, res) => {
  res.status(500).json({ message: 'Internal server error.' });
 }
 });
+
 
 module.exports = router;
